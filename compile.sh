@@ -20,7 +20,7 @@ SRC="src/bestimator/"
 $FC -O $INCLUDE -c $SRC/bestimator.f90  -o $OBJ/bestimator.o $FLAG
 $FC -O $INCLUDE -c $SRC/BipoSH_ALMll_isotropic_Noise.f90 -o $OBJ/BipoSH_ALMll_isotropic_Noise.o $FLAG
 $FC -O $INCLUDE -c $SRC/BipoSH_anisotropic_noise.f90  -o $OBJ/BipoSH_anisotropic_noise.o $FLAG
-$FC $INCLUDE -o $BIN/bestimator1 $OBJ/bestimator.o $OBJ/BipoSH_ALMll_isotropic_Noise.o $OBJ/BipoSH_anisotropic_noise.o $LIB $FLAG
+$FC $INCLUDE -o $BIN/bestimator $OBJ/bestimator.o $OBJ/BipoSH_ALMll_isotropic_Noise.o $OBJ/BipoSH_anisotropic_noise.o $LIB $FLAG
 
 #Compile betaestimator
 SRC="src/betaestimator"
