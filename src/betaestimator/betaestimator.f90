@@ -84,7 +84,7 @@ program bestimator
     elseif (fst=="chain_l1max") then
       read(snd,"(I4)") chainl1max
     elseif (fst=="sample_number") then
-      read(snd,"(I4)") samplenumber
+      read(snd,"(I5)") samplenumber
     elseif (fst=="pixel_window_function") then
       read(snd,"(a)") pixelwindow
     elseif (fst=="map_nside") then
@@ -149,16 +149,12 @@ program bestimator
   if(trim(mask) == "no") then
       mymask = 0
       if(trim(noise) == "no-noise") then
-          !  write(*,*)"Here"          
+            write(*,*)"Here Noise Variance", noisevariance          
            call nonoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
            samplenumber,nside,trim(mappath),filefs,clebschpath,chainpath)
       else if(trim(noise) == "isotropic") then
-          write(*,*)trim(mappath)
-          write(*,*)mappath
-          write(*,*)'Hi'
-          call isotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
+          call isotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax,noisevariance, &
           samplenumber,nside,mappath,filefs,clebschpath,chainpath,pixelwindow) 
-!              isotropicnoise(llmax,LMAX,clebschl1MAX,clebschlmax,samplenumber,nside, input_map_path,shape_factor_path,clebschpath,out_dir_path)
       else if(trim(noise) == "anisotropic") then
           call anisotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
           nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask)

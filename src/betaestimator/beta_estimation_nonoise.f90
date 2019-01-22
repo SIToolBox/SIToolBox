@@ -344,12 +344,18 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
  
        do l1=2,llmax-2
           l2 = l1+1
-          do j=0,1
-             pbetadot(j) = pbetadot(j) + (sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
-*(ALMll(1,j,l1,l1+1)-ALMll_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
-             pbetaidot(j) = pbetaidot(j) + (sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
-*(ALMlli(1,j,l1,l1+1)-ALMlli_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
-          end do
+          j = 1   
+
+          pbetadot(j) = pbetadot(j) + 4.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
+          *(ALMll(1,j,l1,l1+1)-ALMll_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
+          pbetaidot(j) = pbetaidot(j) + 4.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
+          *(ALMlli(1,j,l1,l1+1)-ALMlli_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
+
+          j = 0 
+          pbetadot(j) = pbetadot(j) + 2.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
+          *(ALMll(1,j,l1,l1+1)-ALMll_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
+          pbetaidot(j) = 0.0
+
        end do
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

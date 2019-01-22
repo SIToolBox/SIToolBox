@@ -14,7 +14,7 @@
 !!           Generate Derivatives  (HM)              !!     
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-subroutine isotropicnoise(llmax,LMAX,clebschl1MAX,clebschlmax,samplenumber,nside, &
+subroutine isotropicnoise(llmax,LMAX,clebschl1MAX,clebschlmax,noise,samplenumber,nside, &
 input_map_path,shape_factor_path,clebschpath,out_dir_path)
  
    use healpix_types
@@ -28,6 +28,7 @@ input_map_path,shape_factor_path,clebschpath,out_dir_path)
    integer :: l2min,l2max
    integer :: m1max,m1min
    integer :: recno,r,h,l1,l2,m1,m2,MyLMAX
+   real*8 :: noise   
 
    real(dp) :: cleb,tempas
 
@@ -65,12 +66,11 @@ input_map_path,shape_factor_path,clebschpath,out_dir_path)
    real(sp), allocatable, dimension(:,:) :: cl,mcl
    real(dp),allocatable,dimension(:) :: Nl
    real(dp),allocatable,dimension(:) :: Clebs  
-
    character :: input_map_path*500, out_dir_path*500
    character :: shape_factor_path*500, clebschpath*500
    character :: pixelwindow*500
 
-   real(dp) :: theta,thetax 
+   real(dp) :: theta,thetax,Mbeta 
    real :: tempx
    nside = 512
 
@@ -109,22 +109,17 @@ input_map_path,shape_factor_path,clebschpath,out_dir_path)
    !!             Initiallize stepsize                    !!
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    
+   write(*,*)noise 
    write(*,*)"input_map_name = ", trim(adjustl(input_map_path))
-   print *,'Hi1'
    write(*,*)"shape_factor_path: ", trim(adjustl(shape_factor_path))
-   write(*,*)'Hi2' 
    write(*,*)"out_dir_path: ", trim(adjustl(out_dir_path))
-   write(*,*)'Hi3'
   
    input_map_path = trim(adjustl(input_map_path))
    shape_factor_path = trim(adjustl(shape_factor_path))
    epsilon1 = 0.01
    Npix = 12*nside*nside
 
-   write(*,*)'Hihihihihi'
    write(*,*)input_map_path
-   write(*,*)'hehehe'   
 
 !   Read the map     
    open(unit=141,file=input_map_path)
@@ -133,9 +128,7 @@ input_map_path,shape_factor_path,clebschpath,out_dir_path)
    end do
    close(unit=141)
 
-  write(*,*)'HIiIIIIIIIIIIIII'   
   write(*,*)'input_map_path :',input_map_path
-  write(*,*)'HIiIIIIIIIIIIIII'
  
 
    !  Read the fs file
@@ -152,12 +145,6 @@ input_map_path,shape_factor_path,clebschpath,out_dir_path)
      read(1451,*)temp,mcl(i,1),temp,temp,temp
    end do 
 
-!   open(unit=145,file=pixelwindow)
-!   do i=0,llmax
-!     read(145,*)pixwin(i)
-!   end do
-!   close(unit=145)
-
 
    dw8 = 1.0_dp
    z = (-1.d0,1.d0)
@@ -170,13 +157,16 @@ input_map_path,shape_factor_path,clebschpath,out_dir_path)
 
    call alm2cl(llmax, llmax, alm, cl)
 
-   open(unit=144,file='Clh.d') 
+   Mbeta = 0
    do i=0,llmax
       ALMll(0,0,i,i) = cl(i,1) 
-      write(144,*)cl(i,1)
-      Nl(i) = 0.0004   ! Initiallize noise matrix
+      Nl(i) = (noise*noise)*(4*3.14159)/Npix  
+
+!      Mbeta = Mbeta + 1.0*sqrt((2.0*i+3.0)*(2.0*i+1.0)) &
+!             /ALMll(0,0,i,i)/ALMll(0,0,i+1,i+1)/2.0*fs(i)*fs(i+1)
    end do
-   close(unit=144) 
+
+!   write(*,*)'Mbeta = ',Mbeta
 
    open(1,file=clebschpath, action='read',status="OLD")
       do i=0,LMAX
@@ -206,14 +196,14 @@ input_map_path,shape_factor_path,clebschpath,out_dir_path)
    MyLMAX = 2
 
 
-   open(unit=9169,file=trim(adjustl(out_dir_path))//'/betaVal.d') !trim(adjustl(out_dir_path))//'betaVal.d')
+   open(unit=9169,file=trim(adjustl(out_dir_path))//'/betaVal.d')
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !!             Initiallize the masses                  !!
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
    call initM(Malmr,Malmi,llmax,cl,Nl)
-write(*,*)"Hi"
+
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !!  Initiallize Data. Also initiallise alm to Data for faster convergence  !!
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -230,7 +220,7 @@ write(*,*)"Hi"
    end do
 
    call calculateALM(Qr,Qi,LMAX,llmax,ALMll,ALMlli,Clebs)
-write(*,*)'Hi 3'
+
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    !!        Initial Potential energy (EVEN BEFORE LOOP STARTS)          !! 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -256,8 +246,13 @@ write(*,*)'Hi 3'
        beta(j)  = beta(j)  + (ALMll(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))
        betai(j) = betai(j) + (ALMlli(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))
        betac(j)  = betac(j)+ fs(l1)*fs(l1)/(cl(l1,1)*cl(l1,1))
+       Mbeta = Mbeta + 1.0*sqrt((2.0*l1+3.0)*(2.0*l1+1.0)) &
+             /ALMll(0,0,l1,l1)/ALMll(0,0,l1+1,l1+1)/2.0*fs(l1)*fs(l1+1) 
      end do
-write(*,*)"Hi4"
+
+!     Mbeta = Mbeta*4       !Mass term of beta
+!     write(*,*)'Mass = ',Mbeta
+
      beta(j)=beta(j)/betac(j)
      betai(j)=betai(j)/betac(j)
 
@@ -268,15 +263,17 @@ write(*,*)"Hi4"
        ALMlli(1,j,l1,l1+1)  = betai(j)*fs(l1)
        ALMlli(1,j,l1+1,l1)  = betai(j)*fs(l1)
      end do
-write(*,*)"Hi5"
    end do
-   
+ 
+   Mbeta = abs(Mbeta)*2       !Mass term of beta
+!   write(*,*)'Mass = ',Mbeta
+
+ 
+   write(9169,*)0.01*beta(0),0.01*beta(1),0.01*betai(1)               ! Remember we multiply fs by 0.01 to avoid any calculation issues of fs being too small
 
    call srand(seed)
-write(*,*)'Hi -- 2a -- this process'
-   do samplenumber1=0,5000                                             ! Number of samples                           
 
-!write(*,*)'Hi..1..'
+   do samplenumber1=0,samplenumber                                    ! Number of samples                           
 
 
      call initPM(Palmr,Palmi,Malmr,Malmi,llmax,int(10000.0*rand()))   ! Initiallizing momentum 
@@ -287,10 +284,12 @@ write(*,*)'Hi -- 2a -- this process'
      !!      The next part is the Hamiltonion dynamics               !!
      !!      This part should be repeted                             !!     
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+   
+     pbeta  = sqrt(Mbeta)*pbeta
+     pbetai = sqrt(Mbeta)*pbetai
+       
 
-     write(*,*)'Now Here'
-
-     repl=4+int(10.0*rand(seed))
+     repl=4+int(8.0*rand(seed))
      do repeat1 = 0,repl      !! Number of steps in a single Hamiltonion is taken as random to avoid resonance 
 
 
@@ -311,7 +310,7 @@ write(*,*)'Hi -- 2a -- this process'
                    else                                                                                     !
                       flag = -1                                                                             !
                    end if                                                                                   !
-                   write(*,*) 'Err 1',i,j,l1,l2,ALMll(i,j,l1,l2)                                            !
+                   write(*,*) 'Err 1',i,j,l1,l2,ALMll(i,j,l1,l2),ALMll(0,0,l1,l1),ALMll(0,0,l2,l2)          !
                    ALMll(i,j,l1,l2) = 0.25*flag*sqrt(abs(ALMll(0,0,l1,l1)*ALMll(0,0,l2,l2)))                !
                  end if                                                                                     !
                  if( abs(ALMlli(i,j,l1,l2)) .gt. 0.25*sqrt(abs(ALMll(0,0,l1,l1)*ALMll(0,0,l2,l2)))) then    !
@@ -320,7 +319,7 @@ write(*,*)'Hi -- 2a -- this process'
                    else                                                                                     !
                       flag = -1                                                                             !
                    end if
-                   write(*,*)'Err 2',i,j,l1,l2,ALMll(i,j,l1,l2)
+                   write(*,*)'Err2',i,j,l1,l2,ALMll(i,j,l1,l2),ALMll(0,0,l1,l1),ALMll(0,0,l2,l2)
                    ALMlli(i,j,l1,l2) = 0.25*flag*sqrt(abs(ALMll(0,0,l1,l1)*ALMll(0,0,l2,l2)))
                  end if 
                end do
@@ -330,7 +329,6 @@ write(*,*)'Hi -- 2a -- this process'
 
      thetax = theta
 
-     write(*,*) 'Coming here'
 
 do frstep=1,3
 
@@ -343,7 +341,6 @@ do frstep=1,3
      theta = thetax
    end if  
 
-!write(*,*)"Hi"
 
 !$omp parallel do &
 !$omp shared ( Qalmrdot, Palmr, Malmr, Qr, Qalmidot, &
@@ -365,9 +362,10 @@ do frstep=1,3
 !$omp end parallel do
 
          do j=0,1
-           beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0
-           betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0
+           beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0/Mbeta
+           betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0/Mbeta
          end do
+
 
         do l1=2,llmax-1
         do j =0,1
@@ -386,10 +384,10 @@ do frstep=1,3
         do i=0,lloopmax
           call n2lm(i,l,m)
           if(m.ne.0) then 
-            Palmrdot(i)  = - 2.0*(Dr(i) - Qr(i))/Nl(l) + 2.0*RSMapr(i) 
-            Palmidot(i)  = - 2.0*(Di(i) - Qi(i))/Nl(l) + 2.0*RSmapi(i) 
+            Palmrdot(i)  = + 2.0*(Dr(i) - Qr(i))/Nl(l) - 2.0*SMapr(i) 
+            Palmidot(i)  = + 2.0*(Di(i) - Qi(i))/Nl(l) - 2.0*Smapi(i) 
           else 
-            Palmrdot(i)  = - 1.0*(Dr(i) - Qr(i))/Nl(l) + 1.0*RSmapr(i) 
+            Palmrdot(i)  = + 1.0*(Dr(i) - Qr(i))/Nl(l) - 1.0*Smapr(i) 
             Palmidot(i)  = 0.0
           end if
         end do
@@ -401,10 +399,8 @@ do frstep=1,3
           if(abs(ALMll(0,0,l1,l1)).lt.1.0d-20) ALMll(0,0,l1,l1) = 1.0d-20
           ProxyAl = ALMll(0,0,l1,l1)
 
-          PALMlldot(0,0,l1,l1) = PALMlldot(0,0,l1,l1)/2.0
-          PALMllidot(0,0,l1,l1) = PALMllidot(0,0,l1,l1)/2.0
           do j=0,1
-             PALMlldot(1,j,l1,l1+1) = PALMlldot(1,j,l1,l1+1)/2.0
+             PALMlldot(1,j,l1,l1+1) =  PALMlldot(1,j,l1,l1+1)/2.0
              PALMllidot(1,j,l1,l1+1) = PALMllidot(1,j,l1,l1+1)/2.0
           end do
         end do   
@@ -415,25 +411,29 @@ do frstep=1,3
         end do
  
         do l1=2,llmax-2              
-          PALMlldot(0,0,l1,l1) = (2.0*l1+1.0)/ProxyAl/2.0 + PALMlldot(0,0,l1,l1)
           l2 = l1+1
-          do j=0,1
-  pbetadot(j) = pbetadot(j) + 2.0*(-PALMlldot(1,j,l1,l1+1)+ &    ! 2* because we need to calculate PALMlldot(l1,l1+1) and (l1,l1-1) 
-sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
+          j=1
+  pbetadot(j) = pbetadot(j) - 4.0*(-PALMlldot(1,j,l1,l1+1)+ &    ! 2* because we need to calculate PALMlldot(l1,l1+1) and (l1,l1-1) 
+1.0*sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
 *ALMll(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
-  pbetaidot(j) = pbetaidot(j) + 2.0*(-PALMllidot(1,j,l1,l1+1)+ &
-sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
+  pbetaidot(j) = pbetaidot(j) - 4.0*(-PALMllidot(1,j,l1,l1+1)+ &
+1.0*sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
 *ALMlli(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
-          end do
+           j=0
+  pbetadot(j) = pbetadot(j) - 2.0*(-PALMlldot(1,j,l1,l1+1)+ &    ! 2* because we need to calculate PALMlldot(l1,l1+1) and (l1,l1-1) 
+1.0*sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
+*ALMll(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
+  pbetaidot(j) = 0
        end do                                                                 ! (-1)^j is ignored     
+
 
 
 !$omp parallel do &
 !$omp shared ( Palmr, Palmi, Palmrdot, Palmidot, Qi, epsilon1, theta) &
 !$omp private ( i, l, m ) 
       do i=0,lloopmax
-           Palmr(i) = Palmr(i) - Palmrdot(i)*epsilon1*theta
-           Palmi(i) = Palmi(i) - Palmidot(i)*epsilon1*theta 
+           Palmr(i) = Palmr(i) + Palmrdot(i)*epsilon1*theta
+           Palmi(i) = Palmi(i) + Palmidot(i)*epsilon1*theta 
  
            call n2lm(i,l,m)
            if(m.eq.0) then
@@ -443,8 +443,8 @@ sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
 !$omp end parallel do
 
       do j=0,1
-         pbeta(j)  = pbeta(j)  - pbetadot(j)*epsilon1*theta
-         pbetai(j) = pbetai(j) - pbetaidot(j)*epsilon1*theta
+         pbeta(j)  = pbeta(j)  + pbetadot(j)*epsilon1*theta
+         pbetai(j) = pbetai(j) + pbetaidot(j)*epsilon1*theta
       end do
 
 
@@ -470,19 +470,18 @@ sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
 
 !$omp end parallel do
 
+!      write(*,*)beta(0),pbetadot(0),beta(0)/pbetadot(0)
+!      write(*,*)beta(1),pbetadot(1),beta(1)/pbetadot(1)
+!      write(*,*)betai(1),pbetaidot(1),betai(1)/pbetaidot(1)
+
       do j=0,1
-         beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0
-         betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0
+        beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0/Mbeta
+        betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0/Mbeta
       end do
 
-      write(*,*)'This :',beta,betai
-!      write(9169,*)beta(0),beta(1),betai(1)
-
 end do
-      write(9169,*)beta(0),beta(1),betai(1)
 
      betai(0) = 0.0                  ! betai(0) can not be nonzero 
-
       do l1=40,llmax
        if(abs(ALMll(0,0,l1,l1)) .lt. 0.001) then
            ALMll(0,0,l1,l1) = 0.001*ALMll(0,0,l1,l1)/abs(ALMll(0,0,l1,l1))
@@ -490,10 +489,13 @@ end do
        end if
       end do
 
-     write(*,*)'This is me'  
+! write(9169,*)0.01*beta(0),0.01*beta(1),0.01*betai(1)
+! write(*,*)beta(0),beta(1),betai(1)
      end do
 
-   write(*,*) 'I am Here'
+   write(9169,*)0.01*beta(0),0.01*beta(1),0.01*betai(1)
+
+   write(*,*) 'Sample No: ',samplenumber1
    end do
 
 end subroutine isotropicnoise
@@ -604,8 +606,8 @@ subroutine gauss_seidel(ALMll,ALMlli,bMap,bmapi,SMAP,SMAPi,RSMAP,RSMAPi,llmax,LM
    do i=iminMPI,imaxMPI
      call n2lm(i,il,im)
      call Sii(0,0,il,il,im,llmax,recno)
-     Smap(i) = bMap(i)/(ALMll(0,0,il,il)*Clebs(recno)*int((-1)**im))           !(-1)^im
-     Smapi(i) = bMapi(i)/(ALMll(0,0,il,il)*Clebs(recno)*int((-1)**im))         !(-1)^im
+     Smap(i) = bMap(i)/(ALMll(0,0,il,il)*Clebs(recno)*int((-1)**im))
+     Smapi(i) = bMapi(i)/(ALMll(0,0,il,il)*Clebs(recno)*int((-1)**im))
    end do
 
 !$omp end parallel do
@@ -646,7 +648,6 @@ subroutine gauss_seidel(ALMll,ALMlli,bMap,bmapi,SMAP,SMAPi,RSMAP,RSMAPi,llmax,LM
           end do
        end do
 
-!       call Smat1(ALMll,il,im,il,im,LMAX,llMAX,SMat,Clebs)
 
        call Sii(0,0,il,il,im,llmax,recno)
        SMat = (ALMll(0,0,il,il)*Clebs(recno)*int((-1)**im))
