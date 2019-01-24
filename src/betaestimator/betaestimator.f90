@@ -151,7 +151,7 @@ program bestimator
       if(trim(noise) == "no-noise") then
             write(*,*)"Here Noise Variance", noisevariance          
            call nonoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
-           samplenumber,nside,trim(mappath),filefs,clebschpath,chainpath)
+           samplenumber,nside,mappath,filefs,clebschpath,chainpath)
       else if(trim(noise) == "isotropic") then
           call isotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax,noisevariance, &
           samplenumber,nside,mappath,filefs,clebschpath,chainpath,pixelwindow) 

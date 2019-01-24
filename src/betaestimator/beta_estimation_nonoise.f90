@@ -54,10 +54,13 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
    real(dp) :: pbetaidot(0:1),pbetai(0:1),pbeta(0:1),betac(0:1),betaci(0:1)
    real(dp) :: pbetadot1(0:1),pbetaidot1(0:1)
    real(dp) :: pbetadot2(0:1),pbetaidot2(0:1)
+   real(dp) :: Mbeta
+
 
    ! Variables for calculaing CPU time
    real(dp) :: c_t1,c_t2
    real(sp), allocatable, dimension(:,:) :: cl
+
    character :: fileinput*500
    character :: filefs*500   
    character :: fileclebsch*500
@@ -99,7 +102,7 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
    write(*,*)'fs filename :',filefs
 
    !  Read the Clebschs. This must be a direct access file generated thrugh the Clebsch ganeeration package
-   open(1,file=fileclebsch,access='direct',recl=64,action='read',status="OLD")
+   open(1,file=fileclebsch,action='read',status="OLD")
    do i=0,LMAX
      do k=0,llmax
        l1=k           ! k --> l1  
@@ -114,8 +117,7 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
            m1min = max(-l1,-l2-j)
            do r=1,int(m1max-m1min)+1
              m1=int(m1min+float(r-1))
-             call Sii(i,j,k,h,m1,llmax,recno)
-             read(1,rec=recno)cleb
+             read(1,*)recno,cleb
              Clebs(recno)=cleb
            enddo
          enddo
@@ -209,15 +211,19 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
      betac(j)  = 0.0
 
      do l1=2,llmax-2
+!       write(*,*)l1,j,ALMll(1,j,l1,l1+1)
        beta(j)  = beta(j)  + (ALMll(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))     
        betai(j) = betai(j) + (ALMlli(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))
        betac(j)  = betac(j)+ fs(l1)*fs(l1)/(cl(l1,1)*cl(l1,1))
-     end do
+       Mbeta = Mbeta + 1.0*sqrt((2.0*l1+3.0)*(2.0*l1+1.0)) &
+             /ALMll(0,0,l1,l1)/ALMll(0,0,l1+1,l1+1)/2.0*fs(l1)*fs(l1+1)
 
+     end do
+     write(*,*)'Here'
      beta(j)=beta(j)/betac(j)
      betai(j)=betai(j)/betac(j)
 
-     do l1=2,llmax
+     do l1=2,llmax-1
        ALMll(1,j,l1,l1+1)   = beta(j)*fs(l1)
        ALMll(1,j,l1,l1-1)   = beta(j)*fs(l1)
        ALMlli(1,j,l1,l1+1)  = betai(j)*fs(l1)
@@ -225,12 +231,15 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
      end do
    end do
 
+   Mbeta = abs(Mbeta)
    betai(0) =0.0     ! Betai should be set to 0. Otherwise small error will
                      ! increase to provide it some random distribution which is
                      ! not real 
 
    write(9171,*)'Beta_r0     ','Beta_r1    ','Beta_i1'
-   write(9171,*)beta,betai(1),maxsample
+   write(9171,*)beta,betai(1)
+
+   write(*,*)beta,betai(1),maxsample
 
 
    do samplenumber=0,maxsample 
@@ -242,6 +251,11 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
       call initbeta(pbeta,int(10000.0*rand()))
       call initbeta(pbetai,int(10000.0*rand()))
 
+
+     pbeta  = sqrt(Mbeta)*pbeta
+     pbetai = sqrt(Mbeta)*pbetai
+
+
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      !!      The next part is the Hamiltonion dynamics               !!
      !!      This part should be repeted                             !!     
@@ -251,7 +265,7 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
      call cpu_time(c_t1)
 
 
-     repl=int(8.0*rand())
+     repl=int(30.0*rand())
      do repeat1 = 0,8+repl     !! Number of steps in a single Hamiltonion is taken as random to avoid resonance 
 
 
@@ -314,8 +328,8 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
 
 
           do j=0,1
-             beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0
-             betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0
+             beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0/Mbeta
+             betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0/Mbeta
           end do
 
 
@@ -324,7 +338,7 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
         do j =0,1
-        do l1=2,llmax
+        do l1=2,llmax-1
           ALMll(1,j,l1,l1+1)   = beta(j)*fs(l1)
           ALMll(1,j,l1,l1-1)   = beta(j)*fs(l1)
           ALMlli(1,j,l1,l1+1)  = betai(j)*fs(l1)
@@ -346,13 +360,17 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
           l2 = l1+1
           j = 1   
 
-          pbetadot(j) = pbetadot(j) + 4.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
+!ALMll_old(1,0,l1,l1+1) = 0.0
+!ALMll_old(1,1,l1,l1+1) = 0.0
+!ALMlli_old(1,1,l1,l1+1) = 0.0
+
+          pbetadot(j) = pbetadot(j) - 4.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
           *(ALMll(1,j,l1,l1+1)-ALMll_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
-          pbetaidot(j) = pbetaidot(j) + 4.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
+          pbetaidot(j) = pbetaidot(j) - 4.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
           *(ALMlli(1,j,l1,l1+1)-ALMlli_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
 
           j = 0 
-          pbetadot(j) = pbetadot(j) + 2.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
+          pbetadot(j) = pbetadot(j) - 2.0*(sqrt((2.0*l1+1.0)*(2.0*l1-1.0))*int((-1)**(l1+l2)) &
           *(ALMll(1,j,l1,l1+1)-ALMll_old(1,j,l1,l1+1))/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
           pbetaidot(j) = 0.0
 
@@ -363,16 +381,19 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  
        do j=0,1
-         pbeta(j)  = pbeta(j)  - pbetadot(j)*epsilon1*theta
-         pbetai(j) = pbetai(j) - pbetaidot(j)*epsilon1*theta
+         pbeta(j)  = pbeta(j)  + pbetadot(j)*epsilon1*theta
+         pbetai(j) = pbetai(j) + pbetaidot(j)*epsilon1*theta
        end do
 
 
        do j=0,1
-          beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0
-          betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0
+          beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0/Mbeta
+          betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0/Mbeta
        end do
-
+       !write(*,*)beta(0),pbetadot(0)
+       !write(*,*)beta(1),pbetadot(1)
+       !write(*,*)betai(0),pbetaidot(0)
+       !write(*,*)betai(1),pbetaidot(1)
 end do
 
       betai(0) = 0.0
@@ -385,7 +406,7 @@ end do
 
        write(*,*)samplenumber,beta,betai
        write(9171,*)beta,betai(1)
-
+!stop
    end do
    close(unit=154) 
    close(unit=9171) 
