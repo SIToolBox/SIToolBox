@@ -77,6 +77,8 @@ noisevar_path,Cl_path,mymask,pixelwindow)
    real(dp), allocatable, dimension(:) :: dfQr,dfQi
 
 
+   real(dp) :: Mbeta
+
    real(dp) :: theta,thetax 
    real :: tempx
 
@@ -128,15 +130,12 @@ noisevar_path,Cl_path,mymask,pixelwindow)
 
 write(*,*)'#############################################'
 print *, "Enter full path to input map"
-!read(*,*)input_map_path
 write(*,*)"input_map_name = ", trim(adjustl(input_map_path))
 
 print *, "Enter full path to shape factor file"
-!read(*,*)shape_factor_path
 write(*,*)"shape_factor_path: ", trim(adjustl(shape_factor_path))
  
 print *, "Enter path to directory to store output."
-!read(*,*)out_dir_path
 write(*,*)"out_dir_path: ", trim(adjustl(out_dir_path))
 
 print *,'Enter the path of Cl'
@@ -177,11 +176,15 @@ write(*,*)'Done'
      read(1451,*)temp,mcl(i,1),temp,temp,temp
    end do 
 
+   write(*,*)'Here 179'
+
    open(unit=144,file=noisevar_path)
    do i=0,Npix-1
      read(144,*)NoiseMap(i)
    end do
    close(unit=144)
+   
+   write(*,*)'Here 187',pixelwindow
 
    open(unit=145,file=pixelwindow)
    do i=0,llmax
@@ -189,6 +192,7 @@ write(*,*)'Done'
    end do
    close(unit=145)
 
+    write(*,*)'Here 193'
 
    if(mymask .eq. 1) then
      open(unit=146,file=maskpath)
@@ -202,6 +206,8 @@ write(*,*)'Done'
        NoiseMap(i) = NoiseMap(i) + 9999999.9*(1.0-MaskMap(i))
      end do
    end if
+
+   write(*,*)'Here' 
 
    open(unit=232,file='Testcl.d')
    
@@ -298,11 +304,14 @@ write(*,*)'Done'
      beta(j) = 0.0
      betai(j) = 0.0
      betac(j)  = 0.0
-
+     Mbeta = 0
      do l1=2,llmax-2
        beta(j)  = beta(j)  + (ALMll(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))
        betai(j) = betai(j) + (ALMlli(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))
        betac(j)  = betac(j)+ fs(l1)*fs(l1)/(cl(l1,1)*cl(l1,1))
+
+       Mbeta = Mbeta + 1.0*sqrt((2.0*l1+3.0)*(2.0*l1+1.0)) &
+             /ALMll(0,0,l1,l1)/ALMll(0,0,l1+1,l1+1)/2.0*fs(l1)*fs(l1+1)
      end do
 
      beta(j)=beta(j)/betac(j)
@@ -318,7 +327,8 @@ write(*,*)'Done'
        ALMlli(1,j,l1+1,l1)  = betai(j)*fs(l1)
      end do
    end do
-   
+    
+   Mbeta = abs(Mbeta)*2
 
    call srand(seed)
    do samplenumber=0,5000                                             ! Number of samples                           
@@ -327,6 +337,10 @@ write(*,*)'Done'
      call initPM(Palmr,Palmi,Malmr,Malmi,llmax,int(10000.0*rand()))   ! Initiallizing momentum 
      call initbeta(pbeta,int(10000.0*rand()))                         !   
      call initbeta(pbetai,int(10000.0*rand()))                        !
+
+     pbeta  = sqrt(Mbeta)*pbeta
+     pbetai = sqrt(Mbeta)*pbetai
+
 
      write(*,*)'This Sanple number :',samplenumber
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -421,8 +435,8 @@ do frstep=1,3
 !   write(232,"(9999(E20.5))")cl(:,1)
 
          do j=0,1
-           beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0
-           betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0
+           beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0/Mbeta
+           betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0/Mbeta
          end do
 
         do l1=2,llmax-1
@@ -466,7 +480,7 @@ do frstep=1,3
 !$omp   private ( i, l, m, noipix )
      do i = 0,12*nside*nside-1
        noipix = NoiseMap(i)
-       Map2(i,1)=Map2(i,1)/noipix/noipix*250329.0 !/0.000004
+       Map2(i,1)=Map2(i,1)/noipix/noipix*(Npix*Npix*3/3.1416)  !250329.0 !/0.000004
        if(noipix > 1000) then
           Map2(i,1)=0.0
        end if
@@ -531,14 +545,20 @@ do frstep=1,3
         do l1=2,llmax-2              
           PALMlldot(0,0,l1,l1) = (2.0*l1+1.0)/ProxyAl/2.0 + PALMlldot(0,0,l1,l1)
           l2 = l1+1
-          do j=0,1
-  pbetadot(j) = pbetadot(j) - 2.0*(-((-1.0)**j)*PALMlldot(1,j,l1,l1+1)+ &    ! 2* because we need to calculate PALMlldot(l1,l1+1) and (l1,l1-1) 
-sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
-*ALMll(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
-  pbetaidot(j) = pbetaidot(j) - 2.0*(-((-1.0)**j)*PALMllidot(1,j,l1,l1+1)+ &
-sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
-*ALMlli(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
-          end do
+          j = 1
+          pbetadot(j) = pbetadot(j) - 4.0*(-((1.0)**j)*PALMlldot(1,j,l1,l1+1)+ &  
+            sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
+            *ALMll(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
+          pbetaidot(j) = pbetaidot(j) - 4.0*(-((1.0)**j)*PALMllidot(1,j,l1,l1+1)+ &
+            sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
+            *ALMlli(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
+
+          j = 0
+          pbetadot(j) = pbetadot(j) - 2.0*(-((1.0)**j)*PALMlldot(1,j,l1,l1+1)+ &    
+            sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
+            *ALMll(1,j,l1,l1+1)/ALMll(0,0,l1,l1)/ALMll(0,0,l2,l2)/2.0)*fs(l1)
+          pbetaidot(j) = 0
+
        end do
 
 !$omp parallel do &
@@ -584,8 +604,8 @@ sqrt((2.0*l1+3.0)*(2.0*l1+1.0))*int((-1)**(l1+l2)) &
 !$omp end parallel do
 
       do j=0,1
-         beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0
-         betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0
+         beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0/Mbeta
+         betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0/Mbeta
       end do
       write(*,*)beta,betai
 end do

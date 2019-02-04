@@ -203,7 +203,8 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
    ! note that Minimum Variance estimator of beta is a point where the Chi^2 is
    ! minimum. The formula for minimum variance estimator can be calculaated
    ! by setting the derivative of Chi^2 with respoect to beta to 0
-  
+ 
+   Mbeta = 0.0 
    do j=0,1
 
      beta(j) = 0.0
@@ -211,7 +212,6 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
      betac(j)  = 0.0
 
      do l1=2,llmax-2
-!       write(*,*)l1,j,ALMll(1,j,l1,l1+1)
        beta(j)  = beta(j)  + (ALMll(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))     
        betai(j) = betai(j) + (ALMlli(1,j,l1,l1+1)*fs(l1))/(cl(l1,1)*cl(l1,1))
        betac(j)  = betac(j)+ fs(l1)*fs(l1)/(cl(l1,1)*cl(l1,1))
@@ -219,7 +219,6 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
              /ALMll(0,0,l1,l1)/ALMll(0,0,l1+1,l1+1)/2.0*fs(l1)*fs(l1+1)
 
      end do
-     write(*,*)'Here'
      beta(j)=beta(j)/betac(j)
      betai(j)=betai(j)/betac(j)
 
@@ -237,9 +236,8 @@ samplenumber,nside,fileinput,filefs,fileclebsch,chainpath)
                      ! not real 
 
    write(9171,*)'Beta_r0     ','Beta_r1    ','Beta_i1'
-   write(9171,*)beta,betai(1)
+   write(9171,*)0.01*beta,0.01*betai(1)
 
-   write(*,*)beta,betai(1),maxsample
 
 
    do samplenumber=0,maxsample 
@@ -405,7 +403,7 @@ end do
        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
        write(*,*)samplenumber,beta,betai
-       write(9171,*)beta,betai(1)
+       write(9171,*)0.01*beta,0.01*betai(1)
 !stop
    end do
    close(unit=154) 

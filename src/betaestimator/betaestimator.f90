@@ -157,7 +157,7 @@ program bestimator
           samplenumber,nside,mappath,filefs,clebschpath,chainpath,pixelwindow) 
       else if(trim(noise) == "anisotropic") then
           call anisotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
-          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask)
+          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask,pixelwindow)
       else
          print *,"Mask parameter should be either yes  or no. Check the parameter file"
       end if
@@ -165,13 +165,13 @@ program bestimator
       mymask = 1
       if(trim(noise) == "no-noise") then
           call anisotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
-          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask)
+          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask,pixelwindow)
       else if(trim(noise) == "isotropic") then
           call anisotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
-          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask)
+          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask,pixelwindow)
       else if(trim(noise) == "anisotropic") then
           call anisotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax, &
-          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask)
+          nside,samplenumber,mappath,filefs,clebschpath,chainpath,maskpath,noisevariancepath,clpath,mymask,pixelwindow)
       else 
          print *,"Mask parameter should be either yes  or no. Check the parameter file"
       end if
