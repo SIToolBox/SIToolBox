@@ -74,7 +74,7 @@
    call map2alm(nside, llmax, llmax, map2, alm, z, dw8)
 
 
-   open(1,file='/home/sdas33/DATA/Final_beta_estimation/clebsch/clebs.dat',access='direct',recl=64, action='read',status="OLD")
+   open(1,file='/home/sdas33/DATA/Final_beta_estimation/clebsch/clebs.dat', action='read',status="OLD")
    do i=0,LMAX
      do k=0,llmax
        l1=k           ! k --> l1  
@@ -90,7 +90,7 @@
            do r=1,int(m1max-m1min)+1 
              m1=int(m1min+float(r-1)) 
              call Sii(i,j,k,h,m1,llmax,recno)
-             read(1,rec=recno)cleb
+             read(1,*)recno,cleb
              Clebs(recno)=cleb  
            enddo 
          enddo

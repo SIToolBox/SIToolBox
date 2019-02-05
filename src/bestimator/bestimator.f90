@@ -68,9 +68,9 @@ program bestimator
       read(snd,"(I4)") clebschl1max                
     elseif (fst=="mask_path") then
       read(snd,"(a)") maskpath
-    elseif (fst=="noise_variance_path") then
+    elseif (fst=="noise_sd_path") then
       read(snd,"(a)") noisevariancepath
-    elseif (fst=="noise_variance") then
+    elseif (fst=="noise_sd") then
       read(snd,*) noisevariance
     elseif (fst=="map_path") then
       read(snd,"(a)") mappath
@@ -119,8 +119,8 @@ program bestimator
   print "(a,I2)","clebschlmax  = ", clebschlmax
   print "(a,I4)","clebschl1max = ", clebschl1max
   print "(a,a)","mask_path = ", trim(maskpath)
-  print "(a,a)","noise_variance_path = ", trim(noisevariancepath)
-  print "(a,G3.2)","noise_variance = ", noisevariance
+  print "(a,a)","noise_sd_path = ", trim(noisevariancepath)
+  print "(a,G3.2)","noise_sd = ", noisevariance
   print "(a,a)","map_path = ", trim(mappath)
   print "(a,a)","Map nside = ", nside
   print "(a,a)","chain_path = ", trim(chainpath)

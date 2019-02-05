@@ -258,7 +258,7 @@ write(*,*)'Done'
 
    MyLMAX = 2
 
-   write(*,*)'The value of Beta is :',trim(adjustl(out_dir_path))
+   write(*,*)'The value of Beta is in :',trim(adjustl(out_dir_path))
    open(unit=9169,file=trim(adjustl(out_dir_path))//'/betaVal.d')
 
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -333,7 +333,6 @@ write(*,*)'Done'
    call srand(seed)
    do samplenumber=0,5000                                             ! Number of samples                           
 
-     write(*,*)'My Sample Number :',samplenumber 
      call initPM(Palmr,Palmi,Malmr,Malmi,llmax,int(10000.0*rand()))   ! Initiallizing momentum 
      call initbeta(pbeta,int(10000.0*rand()))                         !   
      call initbeta(pbetai,int(10000.0*rand()))                        !
@@ -342,7 +341,7 @@ write(*,*)'Done'
      pbetai = sqrt(Mbeta)*pbetai
 
 
-     write(*,*)'This Sanple number :',samplenumber
+     write(*,*)'Sample number :',samplenumber
      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      !!      The next part is the Hamiltonion dynamics               !!
      !!      This part should be repeted                             !!     
@@ -607,7 +606,6 @@ do frstep=1,3
          beta(j)  = beta(j)  + pbeta(j)*epsilon1*theta/2.0/Mbeta
          betai(j) = betai(j) + pbetai(j)*epsilon1*theta/2.0/Mbeta
       end do
-      write(*,*)beta,betai
 end do
 
 

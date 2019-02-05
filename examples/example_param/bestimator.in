@@ -5,7 +5,7 @@ NOISE = anisotropic
 MASK = no
 
 #Information about clebsch gordan coefficients C^{ L M }_{ l1 l2 m1 m2 }
-CLEBSCH_PATH = /home/sdas33/DATA/Final_beta_estimation/clebsch/clebs.dat
+CLEBSCH_PATH = Clebs_Lmax_2_lmax_01024.dat
 CLEBSCH_Lmax = 2
 CLEBSCH_l1max = 1024
 
@@ -13,24 +13,24 @@ CLEBSCH_l1max = 1024
 MASK_PATH = /home/sdas33/DATA/SIToolBox/examples/ 
 
 #Anisotropic NOISE
-#Noise variance map file in the pixel space (if NOISE=anisotropic). Otherwise you can leave it blanck
-NOISE_VARIANCE_PATH =   /home/sdas33/DATA/SIToolBox/data/Nmap.d
+#Noise variance map file in the pixel space (if NOISE=anisotropic). Otherwise you can leave it blank
+NOISE_SD_PATH = /home/sdas33/DATA/Data_SIToolBox/AnisoNoiseMap_30/noisevar_30.d
 
 #Isotropic NOISE
-#Noise variance in pixel space (if NOISE=isotropic). Otherwise you can leave it blanck
-NOISE_VARIANCE = 30.0
+#Noise variance in pixel space (if NOISE=isotropic). Otherwise you can leave it blank
+NOISE_SD = 30.0
 
 #Enter the input map path. Map should be in ASCII format and ordering is RING. (For fits maps first convert using fits2d command)
-MAP_PATH = /home/sdas33/DATA/SIToolBox/data/Tmap.d
+MAP_PATH = AniN_30_Dopmap_512_103.d 
 MAP_NSIDE = 512
 
 #location of the folder where the chain will be stored (One run can generate only one chain.)
-CHAIN_PATH = /home/sdas33/DATA/SIToolBox/examples/Bestimator_Chain/anisotropic
+CHAIN_PATH = ./chain
 
 #Chain parameters
 CHAIN_Lmax = 2
 CHAIN_l1max = 1024
-SAMPLE_NUMBER = 5000
+SAMPLE_NUMBER = 25000
 
 
  
