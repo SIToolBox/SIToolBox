@@ -11,6 +11,7 @@ program bestimator
   character(len=strlen) :: mask = "", noise = "", fst, snd
   character(len=500)    :: clebschpath="",maskpath =""
   character(len=500)    :: noisevariancepath,mappath,chainpath
+  character(len=500)    :: pixelwindowfunction
   character(len=strlen), allocatable :: otherfamily(:), tmp(:)
   character(len=1000)   :: line
   integer               :: stat,  j, j0, j1, ii = 1, z
@@ -74,6 +75,8 @@ program bestimator
       read(snd,*) noisevariance
     elseif (fst=="map_path") then
       read(snd,"(a)") mappath
+    elseif (fst=="pixel_window_function") then
+      read(snd,"(a)") pixelwindowfunction       
     elseif (fst=="chain_path") then
       read(snd,"(a)") chainpath
     elseif (fst=="chain_lmax") then
@@ -122,6 +125,7 @@ program bestimator
   print "(a,a)","noise_sd_path = ", trim(noisevariancepath)
   print "(a,G3.2)","noise_sd = ", noisevariance
   print "(a,a)","map_path = ", trim(mappath)
+  print "(a,a)","pixel_window_path",trim(pixelwindowfunction)
   print "(a,a)","Map nside = ", nside
   print "(a,a)","chain_path = ", trim(chainpath)
   print "(a,I2)","chain_lmax = ", chainlmax
@@ -132,7 +136,7 @@ program bestimator
   if(trim(noise) == "isotropic") then
       if(trim(mask) == "yes") then
          call anisotropic(chainl1max,chainlmax,clebschl1MAX,clebschlmax,nside,samplenumber,   & 
-         noisevariance,mappath,noisevariancepath,clebschpath,maskpath,chainpath,1,1)
+         noisevariance,mappath,pixelwindowfunction,noisevariancepath,clebschpath,maskpath,chainpath,1,1)
          print *,"yes"  
       else if(trim(mask) == "no") then
          call isotropicnoise(chainl1max,chainlmax,clebschl1MAX,clebschlmax,nside,samplenumber, &
@@ -144,11 +148,11 @@ program bestimator
   elseif(trim(noise) == "anisotropic") then
       if(trim(mask) == "yes") then
          call anisotropic(chainl1max,chainlmax,clebschl1MAX,clebschlmax,nside,samplenumber   & 
-       ,noisevariance,mappath,noisevariancepath,clebschpath,maskpath,chainpath,1,0)
+       ,noisevariance,mappath,pixelwindowfunction,noisevariancepath,clebschpath,maskpath,chainpath,1,0)
          print *,"yes"
       else if(trim(mask) == "no") then
          call anisotropic(chainl1max,chainlmax,clebschl1MAX,clebschlmax,nside,samplenumber  & 
-       ,noisevariance,mappath,noisevariancepath,clebschpath,maskpath,chainpath,0,0)
+       ,noisevariance,mappath,pixelwindowfunction,noisevariancepath,clebschpath,maskpath,chainpath,0,0)
          print *,"no"
       else 
          print *,"Mask parameter should be either yes  or no. Check the parameter file"

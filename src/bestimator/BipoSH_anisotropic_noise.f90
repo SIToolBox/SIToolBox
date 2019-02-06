@@ -15,7 +15,7 @@
 
 
 subroutine anisotropic(llmax,LMAX,clbllMAX,clbLMAX,nside,samplenumber,noisevariance,fileinput, &
-noisefileinput,clebschpath,maskpath,chainpath,maskparam,isoparam)
+pixelwindowfunction,noisefileinput,clebschpath,maskpath,chainpath,maskparam,isoparam)
  
    use healpix_types
    use alm_tools
@@ -71,7 +71,7 @@ noisefileinput,clebschpath,maskpath,chainpath,maskparam,isoparam)
    real(dp),allocatable,dimension(:) :: Nl,pixwin
    real(dp),allocatable,dimension(:) :: Clebs 
    character :: fileinput*500,filename*100,filenamei*100,noisefileinput*100
-   character :: clebschpath*500,maskpath*500
+   character :: clebschpath*500,maskpath*500,pixelwindowfunction*500
    character :: chainpath*500,testfile*500
    character(2) :: ci,cj,cl1
 
@@ -131,7 +131,7 @@ noisefileinput,clebschpath,maskpath,chainpath,maskparam,isoparam)
    !!   Read the map file
    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-   open(unit=1141,file='pixel_window_n0512_t1.txt')
+   open(unit=1141,file=pixelwindowfunction)
    do i=0,llmax
        read(1141,*)pixwin(i)!,temp
    end do
