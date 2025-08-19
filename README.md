@@ -4,4 +4,5 @@ SI Toolbox is a package for estimating the isotropy violation in the CMB sky. It
 Different fortran subroutines, provided with this package, can help the users to develop their independent Fortran codes. This document is an overview of the SI Toolbox installation 
 guide, stand-alone facilities and  fortran subroutines.
 
-If you find any issue with the package, please contact sanjone@gmail.com or sdas33@wisc.edu
+
+If you find any issue with the package, please contact sanjone@gmail.com.
